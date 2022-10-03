@@ -371,6 +371,7 @@ class Geoserver:
         self,
         path,
         workspace: Optional[str] = None,
+        layer_title: Optional[str]= None,
         layer_name: Optional[str] = None,
         file_type: str = "GeoTIFF",
         content_type: str = "image/tiff",
@@ -407,7 +408,7 @@ class Geoserver:
         file_type = file_type.lower()
 
         url = "{0}/rest/workspaces/{1}/coveragestores/{2}/file.{3}?coverageName={2}".format(
-            self.service_url, workspace, layer_name, file_type
+            self.service_url, workspace, layer_name, layer_title, file_type
         )
 
         headers = {"content-type": content_type}
@@ -486,6 +487,184 @@ class Geoserver:
 
             if r.status_code not in [200, 201]:
                 return "{}: The coveragestore can not have time dimension! {}".format(
+                    r.status_code, r.content
+                )
+
+        except Exception as e:
+            return "Error: {}".format(e)
+
+    def publish_title_to_coveragestore(
+        self,
+        store_name: Optional[str] = None,
+        store_title: str = None,
+        workspace: Optional[str] = None,
+        #presentation: Optional[str] = "LIST",
+        #units: Optional[str] = "ISO8601",
+        #default_value: Optional[str] = "MINIMUM",
+        content_type: str = "application/xml; charset=UTF-8",
+    ):
+        """
+        Create time dimension in coverage store to publish time series in geoserver.
+
+        Parameters
+        ----------
+        store_name : str, optional
+        workspace : str, optional
+        presentation : str, optional
+        units : str, optional
+        default_value : str, optional
+        content_type : str
+
+        Notes
+        -----
+        More about time support in geoserver WMS you can read here:
+        https://docs.geoserver.org/master/en/user/services/wms/time.html
+        """
+
+        url = "{0}/rest/workspaces/{1}/coveragestores/{2}/coverages/{2}".format(
+            self.service_url, workspace, store_name
+        )
+
+        headers = {"content-type": content_type}
+
+        title_data = (
+        "<coverage>"
+        "<title>{}</title>"
+        "</coverage>".format(store_title)
+        )
+
+        r = None
+        try:
+            r = self._requests(
+                method="put", url=url, data=title_data, headers=headers
+            )
+
+            if r.status_code not in [200, 201]:
+                return "{}: Can't set layer title! {}".format(
+                    r.status_code, r.content
+                )
+
+        except Exception as e:
+            return "Error: {}".format(e)
+
+    def change_coveragestore_crs(
+        self,
+        store_name: Optional[str] = None,
+        crs: str = None,
+        workspace: Optional[str] = None,
+        content_type: str = "application/xml; charset=UTF-8",
+    ):
+        """
+        Create time dimension in coverage store to publish time series in geoserver.
+
+        Parameters
+        ----------
+        store_name : str, optional
+        workspace : str, optional
+        presentation : str, optional
+        units : str, optional
+        default_value : str, optional
+        content_type : str
+
+        Notes
+        -----
+        More about time support in geoserver WMS you can read here:
+        https://docs.geoserver.org/master/en/user/services/wms/time.html
+        """
+
+        url = "{0}/rest/workspaces/{1}/coveragestores/{2}/coverages/{2}".format(
+            self.service_url, workspace, store_name
+        )
+
+        headers = {"content-type": content_type}
+
+        #       <nativeCRS>GEOGCS[&quot;WGS 84&quot;,
+        # DATUM[&quot;World Geodetic System 1984&quot;,
+        #   SPHEROID[&quot;WGS 84&quot;, 6378137.0, 298.257223563, AUTHORITY[&quot;EPSG&quot;,&quot;7030&quot;]],
+        #   AUTHORITY[&quot;EPSG&quot;,&quot;6326&quot;]],
+        # PRIMEM[&quot;Greenwich&quot;, 0.0, AUTHORITY[&quot;EPSG&quot;,&quot;8901&quot;]],
+        # UNIT[&quot;degree&quot;, 0.017453292519943295],
+        # AXIS[&quot;Geodetic longitude&quot;, EAST],
+        # AXIS[&quot;Geodetic latitude&quot;, NORTH],
+        # AUTHORITY[&quot;EPSG&quot;,&quot;4326&quot;]]</nativeCRS>
+        crs_data = (
+        "<coverage>"
+        "<srs>{}</srs>"
+        "</coverage>".format(crs)
+        )
+
+        r = None
+        try:
+            r = self._requests(
+                method="put", url=url, data=crs_data, headers=headers
+            )
+            print(r)
+
+            if r.status_code not in [200, 201]:
+                return "{}: Can't change layer crs! {}".format(
+                    r.status_code, r.content
+                )
+
+        except Exception as e:
+            return "Error: {}".format(e)
+
+    def set_layer_style(
+        self,
+        store_name: Optional[str] = None,
+        style_id: str = None,
+        workspace: Optional[str] = None,
+        content_type: str = "application/xml; charset=UTF-8",
+    ):
+        """
+        Create time dimension in coverage store to publish time series in geoserver.
+
+        Parameters
+        ----------
+        store_name : str, optional
+        workspace : str, optional
+        presentation : str, optional
+        units : str, optional
+        default_value : str, optional
+        content_type : str
+
+        Notes
+        -----
+        More about time support in geoserver WMS you can read here:
+        https://docs.geoserver.org/master/en/user/services/wms/time.html
+        """
+
+        url = "{0}/rest/workspaces/{1}/coveragestores/{2}/coverages/{2}".format(
+            self.service_url, workspace, store_name
+        )
+
+        headers = {"content-type": content_type}
+
+        #       <nativeCRS>GEOGCS[&quot;WGS 84&quot;,
+        # DATUM[&quot;World Geodetic System 1984&quot;,
+        #   SPHEROID[&quot;WGS 84&quot;, 6378137.0, 298.257223563, AUTHORITY[&quot;EPSG&quot;,&quot;7030&quot;]],
+        #   AUTHORITY[&quot;EPSG&quot;,&quot;6326&quot;]],
+        # PRIMEM[&quot;Greenwich&quot;, 0.0, AUTHORITY[&quot;EPSG&quot;,&quot;8901&quot;]],
+        # UNIT[&quot;degree&quot;, 0.017453292519943295],
+        # AXIS[&quot;Geodetic longitude&quot;, EAST],
+        # AXIS[&quot;Geodetic latitude&quot;, NORTH],
+        # AUTHORITY[&quot;EPSG&quot;,&quot;4326&quot;]]</nativeCRS>
+        style_id_data = (
+        "<layer>"
+        "<defaultStyle>"
+        "<id>{}</id>"
+        "</defaultStyle>"
+        "</layer>".format(style_id)
+        )
+
+        r = None
+        try:
+            r = self._requests(
+                method="put", url=url, data=style_id_data, headers=headers
+            )
+            print(r)
+
+            if r.status_code not in [200, 201]:
+                return "{}: Can't change the style! {}".format(
                     r.status_code, r.content
                 )
 
@@ -914,7 +1093,7 @@ class Geoserver:
         try:
             url = "{}/rest/styles/{}.json".format(self.service_url, style_name)
             if workspace is not None:
-                url = "{}/rest/workspaces/{}/styles/{}.json".format(
+                url = "{}/workspaces/{}/styles/{}.json".format(
                     self.service_url, workspace, style_name
                 )
 
